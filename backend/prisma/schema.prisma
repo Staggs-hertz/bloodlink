@@ -1,0 +1,205 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// enums
+enum Role {
+  DONOR
+  HOSPITAL
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum Urgency {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum RequestStatus {
+  PENDING
+  MATCHED
+  APPROVED
+  FULFILLED
+  REJECTED
+}
+
+enum NotificationStatus {
+  SENT
+  READ
+}
+
+model User {
+  id        String @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String @unique
+  password  String
+  role      Role   @default(DONOR)
+
+  // Hospital identity
+  organizationName      String?
+  registrationNumber    String?
+  isVerifiedInstitution Boolean @default(false)
+
+  // Hospital address
+  address String?
+  city    String?
+  state   String?
+  country String? @default("Nigeria")
+
+  isEmailVerified Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  donorProfile         DonorProfile?
+  bloodRequests        BloodRequest[] @relation("HospitalRequests")
+  matchedBloodRequests BloodRequest[] @relation("MatchedDonorRequests")
+  refreshTokens        RefreshToken[]
+  notifications        Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([isVerifiedInstitution])
+  @@index([isEmailVerified])
+}
+
+model DonorProfile {
+  id          String     @id @default(uuid())
+  userId      String     @unique
+  bloodType   BloodType?
+  gender      Gender?
+  dateOfBirth DateTime?
+  phone       String?
+  city        String?
+  state       String?
+  country     String     @default("Nigeria")
+  isAvailable Boolean    @default(true)
+  smsOptIn    Boolean    @default(false) // ← added for Termii SMS
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([bloodType])
+  @@index([isAvailable])
+  @@index([bloodType, isAvailable])
+  @@index([gender])
+  @@index([city])
+  @@index([state])
+  @@index([country])
+}
+
+model BloodRequest {
+  id         String @id @default(uuid())
+  hospitalId String
+  hospital   User   @relation("HospitalRequests", fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  matchedDonorId String?
+  matchedDonor   User?   @relation("MatchedDonorRequests", fields: [matchedDonorId], references: [id], onDelete: SetNull)
+
+  bloodType    BloodType
+  urgency      Urgency   @default(NORMAL)
+  unitsNeeded  Int
+  hospitalName String
+  notes        String?
+
+  patientName   String?
+  patientAge    Int?
+  patientGender Gender?
+  hospitalNo    String?
+  ward          String?
+  status        RequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([matchedDonorId])
+  @@index([bloodType])
+  @@index([status])
+  @@index([urgency])
+  @@index([bloodType, status])
+  @@index([hospitalId, status])
+}
+
+model BloodInventory {
+  id             String    @id @default(uuid())
+  bloodType      BloodType @unique
+  unitsAvailable Int       @default(0)
+  updatedAt      DateTime  @updatedAt
+
+  @@index([bloodType])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([isRevoked])
+  @@index([userId, isRevoked])
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  userId    String
+  message   String
+  status    NotificationStatus @default(SENT)
+  createdAt DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@index([isUsed])
+}
