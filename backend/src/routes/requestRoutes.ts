@@ -23,7 +23,7 @@ router.use(authenticate, requireVerified);
 // HOSPITAL routes
 
 router.post(
-  "/",
+  "/new",
   authorize("HOSPITAL"),
   validate(createRequestSchema),
   requestController.create,
