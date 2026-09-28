@@ -35,6 +35,11 @@ export class RequestService {
       unitsNeeded: number;
       hospitalName: string;
       notes?: string;
+      patientName?: string;
+      patientAge?: number;
+      patientGender?: "MALE" | "FEMALE";
+      hospitalNo?: string;
+      ward?: string;
     },
   ) {
     const hospital = await prisma.user.findUnique({
@@ -65,6 +70,11 @@ export class RequestService {
         unitsNeeded: data.unitsNeeded,
         hospitalName: data.hospitalName,
         notes: data.notes,
+        patientName: data.patientName,
+        patientAge: data.patientAge,
+        patientGender: data.patientGender,
+        hospitalNo: data.hospitalNo,
+        ward: data.ward,
         status: "PENDING",
       },
     });

@@ -25,23 +25,28 @@ export const createRequestSchema = z.object({
 
     urgency: z.enum(["NORMAL", "URGENT", "CRITICAL"]).default("NORMAL"),
 
-    unitsNeeded: z
+    unitsNeeded: z.coerce
       .number()
       .int("Units needed must be a whole number")
       .min(1, "At least 1 unit is required")
       .max(50, "A maximum of 50 units can be requested at once"),
 
-    hospitalName: z
-      .string()
-      .trim()
-      .min(1, "Hospital name is required")
-      .max(150, "Hospital name cannot exceed 150 characters"),
+    // hospitalName: z
+    //   .string()
+    //   .trim()
+    //   .min(1, "Hospital name is required")
+    //   .max(150, "Hospital name cannot exceed 150 characters"),
 
     notes: z
       .string()
       .trim()
       .max(500, "Notes cannot exceed 500 characters")
       .optional(),
+    patientName: z.string().trim().max(100).optional(),
+    patientAge: z.coerce.number().int().min(0).max(120).optional(),
+    patientGender: z.enum(["MALE", "FEMALE"]).optional(),
+    hospitalNo: z.string().trim().max(50).optional(),
+    ward: z.string().trim().max(100).optional(),
   }),
 });
 
