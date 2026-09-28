@@ -193,7 +193,7 @@ export const api = {
   // Blood Requests
 
   createRequest: (body) =>
-    request("/requests/new", {
+    request("/requests/", {
       method: "POST",
       body: JSON.stringify(body),
     }),
