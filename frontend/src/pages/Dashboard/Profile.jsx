@@ -93,7 +93,7 @@ const Profile = () => {
         setLoading(true);
         setError("");
 
-        const response = await api.getDonorProfile();
+        const response = await api.getMyDonorProfile();
 
         const donorProfile =
           response?.data?.donorProfile ||
@@ -195,7 +195,7 @@ const Profile = () => {
        * Blood type is handled separately by the backend donor endpoint.
        */
       if (formData.bloodType !== profile.bloodType) {
-        await api.updateDonorBloodType({
+        await api.updateBloodType({
           bloodType: formData.bloodType,
         });
       }
@@ -217,7 +217,7 @@ const Profile = () => {
        * Availability is kept as part of the donor profile experience.
        */
       if (formData.isAvailable !== profile.isAvailable) {
-        await api.updateDonorAvailability({
+        await api.updateAvailability({
           isAvailable: formData.isAvailable,
         });
       }
