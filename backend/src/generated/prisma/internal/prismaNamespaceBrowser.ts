@@ -128,7 +128,7 @@ export const BloodRequestScalarFieldEnum = {
   patientName: 'patientName',
   patientAge: 'patientAge',
   patientGender: 'patientGender',
-  hospitalNo: 'hospitalNo',
+  patientReferenceNo: 'patientReferenceNo',
   ward: 'ward',
   status: 'status',
   createdAt: 'createdAt',

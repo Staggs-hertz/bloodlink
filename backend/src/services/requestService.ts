@@ -3,9 +3,6 @@ import { NotFoundError, BadRequestError, ForbiddenError } from "../utils/error";
 import { sendRequestApprovalEmail, sendDonorMatchEmail } from "./emailService";
 import { notificationService } from "./notificationService";
 
-// ABO + Rh compatibility rules.
-// The key represents the donor's blood type.
-// The array contains blood types that donor can donate to.
 const COMPATIBILITY: Record<string, string[]> = {
   O_NEGATIVE: [
     "O_NEGATIVE",
@@ -30,21 +27,29 @@ export class RequestService {
   async createRequest(
     hospitalId: string,
     data: {
-      bloodType: string;
+      bloodType:
+        | "A_POSITIVE"
+        | "A_NEGATIVE"
+        | "B_POSITIVE"
+        | "B_NEGATIVE"
+        | "AB_POSITIVE"
+        | "AB_NEGATIVE"
+        | "O_POSITIVE"
+        | "O_NEGATIVE";
       urgency: "NORMAL" | "URGENT" | "CRITICAL";
       unitsNeeded: number;
-      hospitalName: string;
+      patientName: string;
+      patientAge: number;
+      patientGender: "MALE" | "FEMALE";
+      hospitalNo: string;
+      ward: string;
       notes?: string;
-      patientName?: string;
-      patientAge?: number;
-      patientGender?: "MALE" | "FEMALE";
-      hospitalNo?: string;
-      ward?: string;
     },
   ) {
     const hospital = await prisma.user.findUnique({
       where: { id: hospitalId },
       select: {
+        id: true,
         role: true,
         organizationName: true,
         isVerifiedInstitution: true,
@@ -65,28 +70,24 @@ export class RequestService {
     const request = await prisma.bloodRequest.create({
       data: {
         hospitalId,
-        bloodType: data.bloodType as any,
+        hospitalName: hospital.organizationName,
+
+        bloodType: data.bloodType,
         urgency: data.urgency,
         unitsNeeded: data.unitsNeeded,
-        hospitalName: data.hospitalName,
-        notes: data.notes,
+
         patientName: data.patientName,
         patientAge: data.patientAge,
         patientGender: data.patientGender,
         hospitalNo: data.hospitalNo,
+
         ward: data.ward,
+
+        notes: data.notes,
         status: "PENDING",
       },
     });
 
-    /*
-     * The system can determine compatible donors internally,
-     * but donor personal information should not be returned
-     * to the hospital when it creates a request.
-     *
-     * Administrators can use the donor-management endpoint
-     * to review eligible donors before approving the request.
-     */
     return request;
   }
 

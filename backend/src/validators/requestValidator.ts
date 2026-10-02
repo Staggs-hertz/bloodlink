@@ -25,7 +25,7 @@ export const createRequestSchema = z.object({
 
     urgency: z.enum(["NORMAL", "URGENT", "CRITICAL"]).default("NORMAL"),
 
-    unitsNeeded: z.coerce
+    unitsNeeded: z
       .number()
       .int("Units needed must be a whole number")
       .min(1, "At least 1 unit is required")
@@ -42,11 +42,20 @@ export const createRequestSchema = z.object({
       .trim()
       .max(500, "Notes cannot exceed 500 characters")
       .optional(),
-    patientName: z.string().trim().max(100).optional(),
-    patientAge: z.coerce.number().int().min(0).max(120).optional(),
-    patientGender: z.enum(["MALE", "FEMALE"]).optional(),
-    hospitalNo: z.string().trim().max(50).optional(),
-    ward: z.string().trim().max(100).optional(),
+    patientName: z
+      .string()
+      .trim()
+      .min(2, "Patient name must contain at least 2 characters")
+      .max(100),
+    patientAge: z
+      .number()
+      .int("Patient age must be a whole number")
+      .min(0, "Patient age cannot be negative")
+      .max(120, "Patient age must exceed 120")
+      .optional(),
+    patientGender: z.enum(["MALE", "FEMALE"]),
+    hospitalNo: z.string().trim().min(1, "Hospital number is required").max(50),
+    ward: z.string().trim().min(1, "Ward is required").max(100),
   }),
 });
 

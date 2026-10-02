@@ -193,7 +193,7 @@ export const api = {
   // Blood Requests
 
   createRequest: (body) =>
-    request("/requests/new", {
+    request("/requests", {
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -274,5 +274,9 @@ export const api = {
       body: JSON.stringify({
         role,
       }),
+    }),
+  verifyEmail: (token) =>
+    request(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
+      method: "POST",
     }),
 };

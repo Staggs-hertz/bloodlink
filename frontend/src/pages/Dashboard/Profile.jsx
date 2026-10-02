@@ -1,4 +1,16 @@
 import { useEffect, useState } from "react";
+import {
+  Calendar,
+  Check,
+  Edit3,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  User,
+  X,
+} from "lucide-react";
+
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../utils/api";
 
@@ -13,62 +25,65 @@ const bloodTypes = [
   { value: "O_NEGATIVE", label: "O-" },
 ];
 
-const genders = [
+const genderOptions = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
 ];
 
-const getInitials = (user) => {
-  return `${user?.firstName?.[0] || ""}${user?.lastName?.[0] || ""}`;
+const emptyProfile = {
+  bloodType: "",
+  gender: "",
+  dateOfBirth: "",
+  phone: "",
+  city: "",
+  state: "",
+  country: "Nigeria",
+  isAvailable: true,
+  smsOptIn: false,
 };
 
-export default function Profile() {
-  const { user } = useAuth();
+const formatBloodType = (bloodType) => {
+  if (!bloodType) return "Not provided";
 
-  if (!user) {
-    return null;
+  const type = bloodTypes.find((item) => item.value === bloodType);
+
+  return type?.label || bloodType.replace("_", " ");
+};
+
+const formatGender = (gender) => {
+  if (!gender) return "Not provided";
+
+  const option = genderOptions.find((item) => item.value === gender);
+
+  return option?.label || gender;
+};
+
+const formatDate = (date) => {
+  if (!date) return "Not provided";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Not provided";
   }
 
-  if (user.role === "HOSPITAL") {
-    return <HospitalProfile user={user} />;
-  }
-
-  if (user.role === "DONOR") {
-    return <DonorProfile user={user} />;
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-card shadow-lg rounded-xl p-6">
-        <h1 className="text-xl font-semibold text-foreground">Profile</h1>
-
-        <p className="text-sm text-muted-foreground mt-2">
-          Profile information is not available for this account type.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   DONOR PROFILE
-   ============================================================ */
-
-function DonorProfile({ user }) {
-  const [formData, setFormData] = useState({
-    bloodType: "",
-    gender: "",
-    dateOfBirth: "",
-    phone: "",
-    city: "",
-    state: "",
-    country: "Nigeria",
-    isAvailable: true,
-    smsOptIn: false,
+  return parsedDate.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
+};
 
+const Profile = () => {
+  const { user, updateUser } = useAuth();
+
+  const [profile, setProfile] = useState(emptyProfile);
+  const [formData, setFormData] = useState(emptyProfile);
+
+  const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -78,24 +93,34 @@ function DonorProfile({ user }) {
         setLoading(true);
         setError("");
 
-        const response = await api.getMyDonorProfile();
-        const profile = response.data;
+        const response = await api.getDonorProfile();
 
-        setFormData({
-          bloodType: profile?.bloodType || "",
-          gender: profile?.gender || "",
-          dateOfBirth: profile?.dateOfBirth
-            ? profile.dateOfBirth.split("T")[0]
+        const donorProfile =
+          response?.data?.donorProfile ||
+          response?.data?.profile ||
+          response?.data ||
+          {};
+
+        const loadedProfile = {
+          bloodType: donorProfile.bloodType || "",
+          gender: donorProfile.gender || "",
+          dateOfBirth: donorProfile.dateOfBirth
+            ? donorProfile.dateOfBirth.slice(0, 10)
             : "",
-          phone: profile?.phone || "",
-          city: profile?.city || "",
-          state: profile?.state || "",
-          country: profile?.country || "Nigeria",
-          isAvailable: profile?.isAvailable ?? true,
-          smsOptIn: profile?.smsOptIn ?? false,
-        });
+          phone: donorProfile.phone || "",
+          city: donorProfile.city || "",
+          state: donorProfile.state || "",
+          country: donorProfile.country || "Nigeria",
+          isAvailable: donorProfile.isAvailable ?? true,
+          smsOptIn: donorProfile.smsOptIn ?? false,
+        };
+
+        setProfile(loadedProfile);
+        setFormData(loadedProfile);
       } catch (err) {
-        setError(err.message || "Failed to load your profile.");
+        setError(
+          err?.message || "Unable to load your profile. Please try again.",
+        );
       } finally {
         setLoading(false);
       }
@@ -107,661 +132,634 @@ function DonorProfile({ user }) {
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
 
-    setFormData((current) => ({
-      ...current,
+    setFormData((previous) => ({
+      ...previous,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
 
-    if (success) {
-      setSuccess("");
-    }
+  const handleEdit = () => {
+    setError("");
+    setSuccess("");
+    setFormData(profile);
+    setEditing(true);
+  };
+
+  const handleCancel = () => {
+    setError("");
+    setSuccess("");
+    setFormData(profile);
+    setEditing(false);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    setError("");
+    setSuccess("");
+
+    if (!formData.bloodType) {
+      setError("Please select your blood type.");
+      return;
+    }
+
+    if (!formData.gender) {
+      setError("Please select your gender.");
+      return;
+    }
+
+    if (!formData.dateOfBirth) {
+      setError("Please enter your date of birth.");
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setError("Please enter your phone number.");
+      return;
+    }
+
+    if (!formData.city.trim()) {
+      setError("Please enter your city.");
+      return;
+    }
+
+    if (!formData.state.trim()) {
+      setError("Please enter your state.");
+      return;
+    }
+
     try {
       setSaving(true);
-      setError("");
-      setSuccess("");
 
-      const response = await api.updateDonorProfile({
-        bloodType: formData.bloodType || null,
-        gender: formData.gender || null,
-        dateOfBirth: formData.dateOfBirth || null,
-        phone: formData.phone || null,
-        city: formData.city || null,
-        state: formData.state || null,
-        country: formData.country || "Nigeria",
-        isAvailable: formData.isAvailable,
+      /*
+       * Blood type is handled separately by the backend donor endpoint.
+       */
+      if (formData.bloodType !== profile.bloodType) {
+        await api.updateDonorBloodType({
+          bloodType: formData.bloodType,
+        });
+      }
+
+      /*
+       * Update the remaining donor profile information.
+       */
+      await api.updateDonorProfile({
+        gender: formData.gender,
+        dateOfBirth: formData.dateOfBirth,
+        phone: formData.phone.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        country: formData.country.trim() || "Nigeria",
         smsOptIn: formData.smsOptIn,
       });
 
-      const profile = response.data;
+      /*
+       * Availability is kept as part of the donor profile experience.
+       */
+      if (formData.isAvailable !== profile.isAvailable) {
+        await api.updateDonorAvailability({
+          isAvailable: formData.isAvailable,
+        });
+      }
 
-      setFormData({
-        bloodType: profile?.bloodType || "",
-        gender: profile?.gender || "",
-        dateOfBirth: profile?.dateOfBirth
-          ? profile.dateOfBirth.split("T")[0]
-          : "",
-        phone: profile?.phone || "",
-        city: profile?.city || "",
-        state: profile?.state || "",
-        country: profile?.country || "Nigeria",
-        isAvailable: profile?.isAvailable ?? true,
-        smsOptIn: profile?.smsOptIn ?? false,
-      });
+      const updatedProfile = {
+        ...formData,
+        phone: formData.phone.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        country: formData.country.trim() || "Nigeria",
+      };
 
+      setProfile(updatedProfile);
+      setFormData(updatedProfile);
+
+      /*
+       * Keep the authenticated user's information in sync where
+       * AuthContext supports updating it.
+       */
+      if (typeof updateUser === "function") {
+        updateUser({
+          ...user,
+        });
+      }
+
+      setEditing(false);
       setSuccess("Your profile has been updated successfully.");
     } catch (err) {
-      setError(err.message || "Failed to update your profile.");
+      setError(
+        err?.message || "Unable to update your profile. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <ProfileSkeleton />;
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 w-48 rounded-lg bg-muted" />
+          <div className="h-4 w-72 rounded-lg bg-muted" />
+
+          <div className="rounded-2xl bg-card p-6">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-muted" />
+
+              <div className="space-y-2">
+                <div className="h-5 w-40 rounded bg-muted" />
+                <div className="h-4 w-56 rounded bg-muted" />
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="h-20 rounded-xl bg-muted" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+    <div className="mx-auto my-7 max-w-4xl space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">My Profile</h1>
 
-        <p className="text-sm text-muted-foreground mt-1">
-          Complete your donor information to help us match you with blood
-          requests.
-        </p>
-      </div>
-
-      {/* Account Information */}
-      <section className="bg-card rounded-xl shadow-lg p-5 sm:p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-            <span className="text-primary text-lg font-bold">
-              {getInitials(user)}
-            </span>
-          </div>
-
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground truncate">
-              {user.firstName} {user.lastName}
-            </h2>
-
-            <p className="text-sm text-muted-foreground truncate">
-              {user.email}
-            </p>
-
-            <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-              Donor
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-red-400 shrink-0 mt-0.5"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
-      )}
-
-      {/* Success */}
-      {success && (
-        <div className="flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-green-400 shrink-0 mt-0.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-
-          <p className="text-sm text-green-400">{success}</p>
-        </div>
-      )}
-
-      {/* Donor Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-card rounded-xl shadow-lg overflow-hidden"
-      >
-        <div className="p-5 sm:p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            Donor Information
-          </h2>
-
-          <p className="text-sm text-muted-foreground mt-1">
-            Keep your information up to date so you can be matched accurately.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage your donor information and donation preferences.
           </p>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-7">
-          {/* Personal Information */}
-          <section>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Personal Information
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Blood Type */}
-              <div>
-                <label
-                  htmlFor="bloodType"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Blood Type
-                </label>
-
-                <select
-                  id="bloodType"
-                  name="bloodType"
-                  value={formData.bloodType}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="">Select blood type</option>
-
-                  {bloodTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label
-                  htmlFor="gender"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Gender
-                </label>
-
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="">Select gender</option>
-
-                  {genders.map((gender) => (
-                    <option key={gender.value} value={gender.value}>
-                      {gender.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Date of Birth */}
-              <div>
-                <label
-                  htmlFor="dateOfBirth"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Date of Birth
-                </label>
-
-                <input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Phone Number
-                </label>
-
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="e.g. 08012345678"
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Location */}
-          <section>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Location
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label
-                  htmlFor="city"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  City
-                </label>
-
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Enter your city"
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="state"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  State
-                </label>
-
-                <input
-                  id="state"
-                  name="state"
-                  type="text"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="Enter your state"
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="country"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
-                  Country
-                </label>
-
-                <input
-                  id="country"
-                  name="country"
-                  type="text"
-                  value={formData.country}
-                  onChange={handleChange}
-                  placeholder="Enter your country"
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-secondary shadow-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Donation Preferences */}
-          <section>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Donation Preferences
-            </h3>
-
-            <div className="space-y-3">
-              {/* Availability */}
-              <label className="flex items-start gap-3 p-4 rounded-lg shadow-lg hover:bg-secondary/50 transition-colors cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="isAvailable"
-                  checked={formData.isAvailable}
-                  onChange={handleChange}
-                  className="mt-1 w-4 h-4 accent-primary"
-                />
-
-                <span>
-                  <span className="block text-sm font-medium text-foreground">
-                    Available to donate
-                  </span>
-
-                  <span className="block text-xs text-muted-foreground mt-1">
-                    Allow BloodLink to consider you when matching donors with
-                    blood requests.
-                  </span>
-                </span>
-              </label>
-
-              {/* SMS */}
-              <label className="flex items-start gap-3 p-4 rounded-lg shadow-lg hover:bg-secondary/50 transition-colors cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="smsOptIn"
-                  checked={formData.smsOptIn}
-                  onChange={handleChange}
-                  className="mt-1 w-4 h-4 accent-primary"
-                />
-
-                <span>
-                  <span className="block text-sm font-medium text-foreground">
-                    Receive SMS notifications
-                  </span>
-
-                  <span className="block text-xs text-muted-foreground mt-1">
-                    Allow BloodLink to send donation-related updates to your
-                    phone number.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </section>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-end px-5 sm:px-6 py-4 bg-secondary/50 border-t border-border">
+        {!editing && (
           <button
-            type="submit"
-            disabled={saving}
-            className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={handleEdit}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            <Edit3 size={16} />
+            Edit Profile
           </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-/* ============================================================
-   HOSPITAL PROFILE
-   ============================================================ */
-
-function HospitalProfile({ user }) {
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Hospital Profile</h1>
-
-        <p className="text-sm text-muted-foreground mt-1">
-          View the information associated with your hospital account.
-        </p>
+        )}
       </div>
 
-      {/* Account Information */}
-      <section className="bg-card rounded-xl shadow-lg p-5 sm:p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-primary"
-            >
-              <path d="M3 21h18" />
-              <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
-              <path d="M9 7h6" />
-              <path d="M9 11h6" />
-              <path d="M9 15h2" />
-              <path d="M13 15h2" />
-            </svg>
-          </div>
-
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground truncate">
-              {user.organizationName || "Hospital / Healthcare Institution"}
-            </h2>
-
-            <p className="text-sm text-muted-foreground truncate">
-              {user.email}
-            </p>
-
-            <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-              Hospital
-            </span>
-          </div>
+      {/* Alerts */}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {error}
         </div>
-      </section>
+      )}
 
-      {/* Institution Information */}
-      <section className="bg-card rounded-xl shadow-lg overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            Institution Information
-          </h2>
-
-          <p className="text-sm text-muted-foreground mt-1">
-            Information provided when this hospital account was registered.
-          </p>
+      {success && !editing && (
+        <div
+          role="status"
+          className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+        >
+          <Check size={17} />
+          {success}
         </div>
+      )}
 
-        <div className="p-5 sm:p-6 space-y-6">
-          {/* Organization */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Hospital / Institution Name
-            </p>
+      {/* Profile */}
+      <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
+        {/* Profile heading */}
+        <div className="border-b border-border px-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold">
+              {user?.firstName?.[0]}
+              {user?.lastName?.[0]}
+            </div>
 
-            <p className="text-sm text-foreground mt-1">
-              {user.organizationName || "Not provided"}
-            </p>
-          </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-foreground">
+                {user?.firstName} {user?.lastName}
+              </h2>
 
-          {/* Registration Number */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Registration Number
-            </p>
-
-            <p className="text-sm text-foreground mt-1">
-              {user.registrationNumber || "Not provided"}
-            </p>
-          </div>
-
-          {/* Contact Person */}
-          <div className="pt-5 border-t border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Account Contact
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Contact Name
-                </p>
-
-                <p className="text-sm text-foreground mt-1">
-                  {user.firstName} {user.lastName}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Email
-                </p>
-
-                <p className="text-sm text-foreground mt-1 break-all">
-                  {user.email}
-                </p>
+              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <Mail size={15} />
+                <span className="truncate">{user?.email}</span>
               </div>
             </div>
-          </div>
 
-          {/* Address */}
-          <div className="pt-5 border-t border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Location
-            </h3>
-
-            <div className="space-y-5">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Address
-                </p>
-
-                <p className="text-sm text-foreground mt-1">
-                  {user.address || "Not provided"}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    City
-                  </p>
-
-                  <p className="text-sm text-foreground mt-1">
-                    {user.city || "Not provided"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    State
-                  </p>
-
-                  <p className="text-sm text-foreground mt-1">
-                    {user.state || "Not provided"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Country
-                  </p>
-
-                  <p className="text-sm text-foreground mt-1">
-                    {user.country || "Not provided"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Verification Status */}
-          <div className="pt-5 border-t border-border">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
-              Institution Verification
-            </h3>
-
-            <div
-              className={`flex items-center gap-3 p-4 rounded-lg border ${
-                user.isVerifiedInstitution
-                  ? "border-green-500/20 bg-green-500/10"
-                  : "border-yellow-500/20 bg-yellow-500/10"
-              }`}
-            >
-              {user.isVerifiedInstitution ? (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-green-400 shrink-0"
-                >
-                  <path d="M12 3l7 4v5c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V7l7-4z" />
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
-              ) : (
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-yellow-400 shrink-0"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              )}
-
-              <div>
-                <p
-                  className={`text-sm font-medium ${
-                    user.isVerifiedInstitution
-                      ? "text-green-400"
-                      : "text-yellow-400"
-                  }`}
-                >
-                  {user.isVerifiedInstitution
-                    ? "Institution Verified"
-                    : "Verification Pending"}
-                </p>
-
-                <p className="text-xs text-muted-foreground mt-1">
-                  {user.isVerifiedInstitution
-                    ? "Your institution has been verified by an administrator."
-                    : "Your institution has not yet been verified by an administrator."}
-                </p>
-              </div>
+            <div className="sm:ml-auto">
+              <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                Donor
+              </span>
             </div>
           </div>
         </div>
-      </section>
-    </div>
-  );
-}
 
-/* ============================================================
-   LOADING SKELETON
-   ============================================================ */
+        {editing ? (
+          /* =========================
+             EDIT MODE
+          ========================= */
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-8 p-6">
+              {/* Personal information */}
+              <section>
+                <div className="mb-5">
+                  <h3 className="text-base font-semibold text-foreground">
+                    Personal Information
+                  </h3>
 
-function ProfileSkeleton() {
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 w-40 bg-card rounded-lg" />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Keep your donor information up to date.
+                  </p>
+                </div>
 
-        <div className="h-28 bg-card border border-border rounded-xl" />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {/* Blood Type */}
+                  <div>
+                    <label
+                      htmlFor="bloodType"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      Blood Type
+                    </label>
 
-        <div className="h-125 bg-card border border-border rounded-xl" />
+                    <select
+                      id="bloodType"
+                      name="bloodType"
+                      value={formData.bloodType}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="">Select blood type</option>
+
+                      {bloodTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Gender */}
+                  <div>
+                    <label
+                      htmlFor="gender"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      Gender
+                    </label>
+
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="">Select gender</option>
+
+                      {genderOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div>
+                    <label
+                      htmlFor="dateOfBirth"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      Date of Birth
+                    </label>
+
+                    <input
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      Phone Number
+                    </label>
+
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+234 800 000 0000"
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Location */}
+              <section className="border-t border-border pt-8">
+                <div className="mb-5">
+                  <h3 className="text-base font-semibold text-foreground">
+                    Location
+                  </h3>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    This helps keep your donor information accurate.
+                  </p>
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {/* City */}
+                  <div>
+                    <label
+                      htmlFor="city"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      City
+                    </label>
+
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="Jos"
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  {/* State */}
+                  <div>
+                    <label
+                      htmlFor="state"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      State
+                    </label>
+
+                    <input
+                      id="state"
+                      name="state"
+                      type="text"
+                      value={formData.state}
+                      onChange={handleChange}
+                      placeholder="Plateau"
+                      required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  {/* Country */}
+                  <div className="sm:col-span-2">
+                    <label
+                      htmlFor="country"
+                      className="mb-2 block text-sm font-medium text-foreground"
+                    >
+                      Country
+                    </label>
+
+                    <input
+                      id="country"
+                      name="country"
+                      type="text"
+                      value={formData.country}
+                      onChange={handleChange}
+                      placeholder="Nigeria"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Donation preferences */}
+              <section className="border-t border-border pt-8">
+                <div className="mb-5">
+                  <h3 className="text-base font-semibold text-foreground">
+                    Donation Preferences
+                  </h3>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Control how you participate in blood donation.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Availability */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-secondary/50">
+                    <input
+                      type="checkbox"
+                      name="isAvailable"
+                      checked={formData.isAvailable}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 accent-primary"
+                    />
+
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">
+                        Available to donate
+                      </span>
+
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Allow BloodLink to consider you when you are eligible
+                        for a blood request.
+                      </span>
+                    </span>
+                  </label>
+
+                  {/* SMS */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-secondary/50">
+                    <input
+                      type="checkbox"
+                      name="smsOptIn"
+                      checked={formData.smsOptIn}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 accent-primary"
+                    />
+
+                    <span>
+                      <span className="block text-sm font-medium text-foreground">
+                        Receive SMS notifications
+                      </span>
+
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Receive donation-related notifications by SMS when
+                        available.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            {/* Form actions */}
+            <div className="flex flex-col-reverse gap-3 border-t border-border bg-secondary/30 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <X size={16} />
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Save size={16} />
+
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* =========================
+             VIEW MODE
+          ========================= */
+          <div className="p-6">
+            {/* Personal Information */}
+            <section>
+              <h3 className="text-base font-semibold text-foreground">
+                Personal Information
+              </h3>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <InfoItem
+                  icon={<User size={17} />}
+                  label="Full Name"
+                  value={
+                    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+                    "Not provided"
+                  }
+                />
+
+                <InfoItem
+                  icon={<Mail size={17} />}
+                  label="Email Address"
+                  value={user?.email || "Not provided"}
+                />
+
+                <InfoItem
+                  icon={<Phone size={17} />}
+                  label="Phone Number"
+                  value={profile.phone || "Not provided"}
+                />
+
+                <InfoItem
+                  icon={<Calendar size={17} />}
+                  label="Date of Birth"
+                  value={formatDate(profile.dateOfBirth)}
+                />
+
+                <InfoItem label="Gender" value={formatGender(profile.gender)} />
+
+                <InfoItem
+                  label="Blood Type"
+                  value={formatBloodType(profile.bloodType)}
+                  highlight
+                />
+              </div>
+            </section>
+
+            {/* Location */}
+            <section className="mt-8 border-t border-border pt-8">
+              <h3 className="text-base font-semibold text-foreground">
+                Location
+              </h3>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <InfoItem
+                  icon={<MapPin size={17} />}
+                  label="City"
+                  value={profile.city || "Not provided"}
+                />
+
+                <InfoItem
+                  icon={<MapPin size={17} />}
+                  label="State"
+                  value={profile.state || "Not provided"}
+                />
+
+                <InfoItem
+                  label="Country"
+                  value={profile.country || "Not provided"}
+                />
+              </div>
+            </section>
+
+            {/* Donation Preferences */}
+            <section className="mt-8 border-t border-border pt-8">
+              <h3 className="text-base font-semibold text-foreground">
+                Donation Preferences
+              </h3>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <InfoItem
+                  label="Donation Availability"
+                  value={profile.isAvailable ? "Available" : "Unavailable"}
+                  status={profile.isAvailable ? "positive" : "neutral"}
+                />
+
+                <InfoItem
+                  label="SMS Notifications"
+                  value={profile.smsOptIn ? "Enabled" : "Disabled"}
+                  status={profile.smsOptIn ? "positive" : "neutral"}
+                />
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+const InfoItem = ({ icon, label, value, highlight = false, status = "" }) => {
+  let valueClass = "text-foreground";
+
+  if (highlight) {
+    valueClass = "text-primary font-semibold";
+  }
+
+  if (status === "positive") {
+    valueClass = "text-green-600 font-medium";
+  }
+
+  if (status === "neutral") {
+    valueClass = "text-muted-foreground font-medium";
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-background/50 px-4 py-3.5">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        <span>{label}</span>
+      </div>
+
+      <p className={`mt-1.5 text-sm ${valueClass}`}>
+        {value || "Not provided"}
+      </p>
+    </div>
+  );
+};
+
+export default Profile;

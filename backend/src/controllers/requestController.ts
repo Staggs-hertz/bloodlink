@@ -1,19 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import { sendSuccess, sendCreated, sendPaginated } from "../utils/response";
 import { requestService } from "../services/requestService";
+import { UnauthorizedError } from "../utils/error";
 
 export class RequestController {
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await requestService.createRequest(
-        req.user!.userId,
+      if (!req.user) {
+        throw new UnauthorizedError("Authentication required");
+      }
+      const request = await requestService.createRequest(
+        req.user.userId,
         req.body,
       );
 
       sendCreated({
         res,
+        data: request,
         message: "Blood request submitted successfully",
-        data: result,
       });
     } catch (error) {
       next(error);

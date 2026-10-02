@@ -13,6 +13,7 @@ import EmergencyContacts from "../pages/Support/EmergencyContacts";
 import HelpCenter from "../pages/Support/HelpCenter";
 import TermsOfService from "../pages/Support/TermsOfService";
 import PrivacyPolicy from "../pages/Support/PrivacyPolicy";
+import VerifyEmail from "../pages/verifyEmail";
 
 // Dashboard Pages
 import Dashboard from "../pages/Dashboard/Dashboard";
@@ -72,8 +73,9 @@ const AppRoutes = () => {
       <Route path="/help" element={<HelpCenter />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
 
-      {/* ========== Public Routes ========== */}
+      {/* ========== Protected Routes ========== */}
       <Route
         element={
           <ProtectedRoute>

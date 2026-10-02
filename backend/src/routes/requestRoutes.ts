@@ -1,15 +1,9 @@
 import { Router } from "express";
-
 import { requestController } from "../controllers/requestController";
-
 import { authenticate } from "../middlewares/authenticate";
-
 import { authorize } from "../middlewares/authorize";
-
 import { requireVerified } from "../middlewares/requireVerified";
-
 import { validate } from "../middlewares/validate";
-
 import {
   createRequestSchema,
   approveRequestSchema,
@@ -17,7 +11,6 @@ import {
 } from "../validators/requestValidator";
 
 const router = Router();
-
 router.use(authenticate, requireVerified);
 
 // HOSPITAL routes
