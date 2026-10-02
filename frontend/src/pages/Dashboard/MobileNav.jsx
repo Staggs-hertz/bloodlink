@@ -159,7 +159,7 @@ const navByRole = {
     { label: "Users", to: "/admin/users", icon: "users" },
     { label: "Requests", to: "/admin/requests", icon: "requests" },
     { label: "Admins", to: "/admin/admins", icon: "shield" },
-    { label: "Profile", to: "/profile", icon: "profile" },
+    { label: "Donors", to: "/admin/donors", icon: "profile" },
   ],
 };
 

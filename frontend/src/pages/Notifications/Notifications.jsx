@@ -178,7 +178,7 @@ const Notifications = () => {
                   className={`rounded-xl border p-5 transition ${
                     isUnread
                       ? "border-primary/15 bg-primary/4"
-                      : "border-white/5 bg-white/2"
+                      : "border-primary/5 bg-primary/2"
                   }`}
                 >
                   <div className="flex gap-4">
@@ -186,7 +186,7 @@ const Notifications = () => {
                       className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                         isUnread
                           ? "bg-primary/10 text-primary"
-                          : "bg-white/5 text-white/30"
+                          : "bg-gray-200 text-gray-500"
                       }`}
                     >
                       <svg
@@ -210,8 +210,8 @@ const Notifications = () => {
                         <p
                           className={`text-sm leading-6 ${
                             isUnread
-                              ? "font-medium text-white"
-                              : "text-white/65"
+                              ? "font-medium text-black"
+                              : "text-gray-500"
                           }`}
                         >
                           {notification.message}
@@ -224,14 +224,14 @@ const Notifications = () => {
                         )}
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/30">
+                      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                         <span>{formatDate(notification.createdAt)}</span>
-                        <span className="text-white/15">•</span>
+                        <span className="text-gray-500">•</span>
                         <span>{formatTime(notification.createdAt)}</span>
 
                         {isUnread && (
                           <>
-                            <span className="text-white/15">•</span>
+                            <span className="text-gray-500">•</span>
 
                             <button
                               type="button"
