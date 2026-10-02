@@ -153,7 +153,6 @@ const icons = {
 const navByRole = {
   DONOR: [
     { label: "Dashboard", to: "/dashboard", icon: "dashboard" },
-    { label: "My Donations", to: "/donations", icon: "donations" },
     { label: "Notifications", to: "/notifications", icon: "notifications" },
     { label: "Profile", to: "/profile", icon: "profile" },
   ],
