@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { adminService } from "../services/adminService";
-import { sendSuccess, sendCreated, sendPaginated } from "../utils/response";
+import { sendSuccess, sendPaginated } from "../utils/response";
 
 export class AdminController {
   async getUsers(
@@ -62,24 +62,6 @@ export class AdminController {
         res,
         message: "User status updated successfully",
         data: user,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async createAdmin(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      const admin = await adminService.createAdmin(req.body);
-
-      sendCreated({
-        res,
-        message: "Admin account created successfully",
-        data: admin,
       });
     } catch (error) {
       next(error);

@@ -1,14 +1,6 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "../config/database";
-import {
-  ConflictError,
-  NotFoundError,
-  ForbiddenError,
-  BadRequestError,
-} from "../utils/error";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../utils/error";
 import { Role } from "../generated/prisma/client";
-
-const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
 
 export class AdminService {
   async getAllUsers(page = 1, limit = 20) {
@@ -253,46 +245,6 @@ export class AdminService {
     });
 
     return result;
-  }
-
-  async createAdmin(data: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  }) {
-    const email = data.email.toLowerCase();
-
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existing) {
-      throw new ConflictError("Email is already registered");
-    }
-
-    const hashedPassword = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
-
-    return prisma.user.create({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email,
-        password: hashedPassword,
-        role: "ADMIN",
-        isEmailVerified: true,
-        isActive: true,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
-    });
   }
 
   async changeUserRole(

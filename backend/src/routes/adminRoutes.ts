@@ -9,7 +9,6 @@ import { validate } from "../middlewares/validate";
 
 import {
   updateStatusSchema,
-  createAdminSchema,
   changeRoleSchema,
   verifyInstitutionSchema,
   paginationSchema,
@@ -39,15 +38,6 @@ router.patch(
   authorize("ADMIN", "SUPER_ADMIN"),
   validate(updateStatusSchema),
   adminController.updateUserStatus,
-);
-
-// Create an administrator account.
-// Only SUPER_ADMIN can create ADMIN accounts.
-router.post(
-  "/users/admin",
-  authorize("SUPER_ADMIN"),
-  validate(createAdminSchema),
-  adminController.createAdmin,
 );
 
 // Change a user's role.

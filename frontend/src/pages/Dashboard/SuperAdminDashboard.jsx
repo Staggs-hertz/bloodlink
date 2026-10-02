@@ -200,10 +200,10 @@ const SuperAdminDashboard = () => {
           api.getNotifications(1, 5),
         ]);
 
-        setUsers(usersResponse.data?.items || []);
-        setRequests(requestsResponse.data?.items || []);
-        setInventory(inventoryResponse.data?.items || []);
-        setNotifications(notificationsResponse.data?.items || []);
+        setUsers(usersResponse.data || []);
+        setRequests(requestsResponse.data || []);
+        setInventory(inventoryResponse.data || []);
+        setNotifications(notificationsResponse.data || []);
       } catch (error) {
         setError(error?.message || "Unable to load the super admin dashboard.");
       } finally {
@@ -235,7 +235,7 @@ const SuperAdminDashboard = () => {
   });
 
   const unreadNotifications = notifications.filter(
-    (notification) => !notification.isRead,
+    (notification) => notification.status === "SENT",
   ).length;
 
   if (loading) {

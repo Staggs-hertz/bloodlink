@@ -1,13 +1,55 @@
 import { prisma } from "../config/database";
-import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/error";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+} from "../utils/error";
+import bcrypt from "bcryptjs";
+
+const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
 
 export class SuperAdminService {
-  /**
-   * Get all admin accounts.
-   *
-   * This intentionally returns only administrative accounts,
-   * rather than every user in the system.
-   */
+  async createAdmin(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+  }) {
+    const email = data.email.toLowerCase();
+
+    const existing = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existing) {
+      throw new ConflictError("Email is already registered");
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
+
+    return prisma.user.create({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email,
+        password: hashedPassword,
+        role: "ADMIN",
+        isEmailVerified: true,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async getAdmins(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 

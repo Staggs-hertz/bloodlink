@@ -9,6 +9,7 @@ import {
   superAdminUserIdSchema,
   superAdminPaginationSchema,
   updateAdminStatusSchema,
+  createAdminSchema,
 } from "../validators/superAdminValidator";
 
 const router = Router();
@@ -31,6 +32,13 @@ router.delete(
   "/admins/:id",
   validate(superAdminUserIdSchema),
   superAdminController.deleteAdmin,
+);
+
+router.post(
+  "/users/admin",
+  authorize("SUPER_ADMIN"),
+  validate(createAdminSchema),
+  superAdminController.createAdmin,
 );
 
 export default router;

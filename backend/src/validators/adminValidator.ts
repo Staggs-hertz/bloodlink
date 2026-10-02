@@ -1,16 +1,5 @@
 import { z } from "zod";
 
-const adminPasswordSchema = z
-  .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number")
-  .regex(
-    /[^A-Za-z0-9]/,
-    "Password must contain at least one special character",
-  );
-
 export const adminUserIdSchema = z.object({
   params: z.object({
     id: z.uuid("Invalid user ID"),
@@ -29,28 +18,6 @@ export const updateStatusSchema = z.object({
           ? "isActive is required"
           : "isActive must be a boolean",
     }),
-  }),
-});
-
-export const createAdminSchema = z.object({
-  body: z.object({
-    firstName: z
-      .string()
-      .trim()
-      .min(1, "First name is required")
-      .max(50, "First name cannot exceed 50 characters"),
-
-    lastName: z
-      .string()
-      .trim()
-      .min(1, "Last name is required")
-      .max(50, "Last name cannot exceed 50 characters"),
-
-    email: z
-      .email("Invalid email address")
-      .transform((value) => value.toLowerCase()),
-
-    password: adminPasswordSchema,
   }),
 });
 

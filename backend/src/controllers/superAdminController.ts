@@ -1,8 +1,26 @@
 import { Request, Response, NextFunction } from "express";
 import { superAdminService } from "../services/superAdminService";
-import { sendSuccess } from "../utils/response";
+import { sendCreated, sendSuccess } from "../utils/response";
 
 export class SuperAdminController {
+  async createAdmin(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const admin = await superAdminService.createAdmin(req.body);
+
+      sendCreated({
+        res,
+        message: "Admin account created successfully",
+        data: admin,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getAdmins(
     req: Request,
     res: Response,
