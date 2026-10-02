@@ -19,7 +19,7 @@ import VerifyEmail from "../pages/verifyEmail";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Notifications from "../pages/Notifications/Notifications";
 import Profile from "../pages/Dashboard/Profile";
-import MyDonations from "../pages/Dashboard/MyDonations";
+// import MyDonations from "../pages/Dashboard/MyDonations";
 import BloodRequest from "../pages/Request/BloodRequest";
 import CreateBloodRequest from "../pages/Request/CreateBloodRequest";
 import Inventory from "../pages/Dashboard/Inventory";
@@ -93,14 +93,14 @@ const AppRoutes = () => {
             </RoleRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/donations"
           element={
             <RoleRoute allowedRoles={["DONOR"]}>
               <MyDonations />
             </RoleRoute>
           }
-        />
+        /> */}
         <Route
           path="/requests"
           element={

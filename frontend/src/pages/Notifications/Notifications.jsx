@@ -13,7 +13,7 @@ const Notifications = () => {
     try {
       const response = await api.getNotifications();
 
-      setNotifications(response.data?.notifications || []);
+      setNotifications(response.data || []);
     } catch (err) {
       setError(err.message || "Failed to load notifications.");
     } finally {
