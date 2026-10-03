@@ -1,9 +1,10 @@
 import { prisma } from "../config/database";
+import { BloodType } from "../generated/prisma/enums";
 import { NotFoundError, BadRequestError, ForbiddenError } from "../utils/error";
 import { sendRequestApprovalEmail, sendDonorMatchEmail } from "./emailService";
 import { notificationService } from "./notificationService";
 
-const COMPATIBILITY: Record<string, string[]> = {
+const COMPATIBILITY: Record<BloodType, BloodType[]> = {
   O_NEGATIVE: [
     "O_NEGATIVE",
     "O_POSITIVE",
@@ -182,6 +183,64 @@ export class RequestService {
     }
 
     return request;
+  }
+
+  async getMatchingDonors(requestId: string) {
+    const request = await prisma.bloodRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        bloodType: true,
+        status: true,
+        matchedDonorId: true,
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundError("Blood request not found");
+    }
+
+    if (!["PENDING", "MATCHED"].includes(request.status)) {
+      throw new BadRequestError(
+        "Donors cannot be matched to a request in its current status",
+      );
+    }
+
+    const compatibleDonorBloodTypes = Object.entries(COMPATIBILITY)
+      .filter(([, recipientTypes]) =>
+        recipientTypes.includes(request.bloodType),
+      )
+      .map(([donorBloodType]) => donorBloodType as BloodType);
+
+    const donors = await prisma.donorProfile.findMany({
+      where: {
+        isAvailable: true,
+        bloodType: {
+          in: compatibleDonorBloodTypes,
+        },
+        user: {
+          role: "DONOR",
+          isActive: true,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        user: {
+          createdAt: "desc",
+        },
+      },
+    });
+
+    return donors;
   }
 
   async approveRequest(requestId: string, donorId: string) {

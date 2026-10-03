@@ -162,7 +162,9 @@ export class AuthController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const result = await authService.verifyEmail(req.body.token);
+      const token = req.query.token as string;
+
+      const result = await authService.verifyEmail(token);
 
       sendSuccess({
         res,

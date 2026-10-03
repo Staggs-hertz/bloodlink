@@ -132,6 +132,24 @@ export class RequestController {
       next(error);
     }
   }
+
+  async getMatchingDonors(
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const donors = await requestService.getMatchingDonors(req.params.id);
+
+      sendSuccess({
+        res,
+        message: "Matching donors retrieved successfully",
+        data: donors,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const requestController = new RequestController();

@@ -28,6 +28,12 @@ router.get("/mine", authorize("HOSPITAL"), requestController.getMine);
 
 router.get("/", authorize("ADMIN", "SUPER_ADMIN"), requestController.getAll);
 
+router.get(
+  "/:id/matching-donors",
+  authorize("ADMIN", "SUPER_ADMIN"),
+  requestController.getMatchingDonors,
+);
+
 router.patch(
   "/:id/approve",
   authorize("ADMIN", "SUPER_ADMIN"),
