@@ -129,18 +129,18 @@ const Notifications = () => {
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="animate-pulse rounded-xl border border-white/5 bg-white/2 p-5"
+                className="animate-pulse rounded-xl border border-gray-200 bg-gray-200 p-5"
               >
-                <div className="mb-3 h-3 w-20 rounded bg-white/10" />
-                <div className="mb-2 h-4 w-3/4 rounded bg-white/10" />
-                <div className="h-3 w-1/3 rounded bg-white/10" />
+                <div className="mb-3 h-3 w-20 rounded bg-gray-300" />
+                <div className="mb-2 h-4 w-3/4 rounded bg-gray-300" />
+                <div className="h-3 w-1/3 rounded bg-gray-300" />
               </div>
             ))}
           </div>
         ) : notifications.length === 0 ? (
           /* Empty State */
-          <div className="flex min-h-80 flex-col items-center justify-center rounded-xl border border-white/5 bg-white/2 px-6 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white/35">
+          <div className="flex min-h-80 flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-200 px-6 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-gray-400">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -177,8 +177,8 @@ const Notifications = () => {
                   key={notification.id}
                   className={`rounded-xl border p-5 transition ${
                     isUnread
-                      ? "border-primary/15 bg-primary/4"
-                      : "border-primary/5 bg-primary/2"
+                      ? "border-primary/60 bg-primary/30"
+                      : "border-primary/50 bg-primary/20"
                   }`}
                 >
                   <div className="flex gap-4">
@@ -186,7 +186,7 @@ const Notifications = () => {
                       className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                         isUnread
                           ? "bg-primary/10 text-primary"
-                          : "bg-gray-200 text-gray-500"
+                          : "bg-gray-600 text-gray-700"
                       }`}
                     >
                       <svg
@@ -211,7 +211,7 @@ const Notifications = () => {
                           className={`text-sm leading-6 ${
                             isUnread
                               ? "font-medium text-black"
-                              : "text-gray-500"
+                              : "text-gray-600"
                           }`}
                         >
                           {notification.message}
