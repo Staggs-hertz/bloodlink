@@ -201,6 +201,8 @@ export const api = {
   getMyRequests: (page = 1, limit = 20) =>
     request(`/requests/mine?page=${page}&limit=${limit}`),
 
+  getMyRequestSummary: () => request("/requests/summary"),
+
   getAllRequests: (page = 1, limit = 20) =>
     request(`/requests?page=${page}&limit=${limit}`),
 
@@ -275,6 +277,7 @@ export const api = {
         role,
       }),
     }),
+
   verifyEmail: (token) =>
     request(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
       method: "POST",

@@ -72,6 +72,26 @@ export class RequestController {
     }
   }
 
+  async getSummary(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const summary = await requestService.getMyRequestSummary(
+        req.user!.userId,
+      );
+
+      sendSuccess({
+        res,
+        message: "Blood request summary retrieved successfully",
+        data: summary,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getById(
     req: Request<{ id: string }>,
     res: Response,

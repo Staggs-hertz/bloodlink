@@ -24,6 +24,8 @@ router.post(
 
 router.get("/mine", authorize("HOSPITAL"), requestController.getMine);
 
+router.get("/summary", authorize("HOSPITAL"), requestController.getSummary);
+
 // ADMIN and SUPER_ADMIN routes
 
 router.get("/", authorize("ADMIN", "SUPER_ADMIN"), requestController.getAll);

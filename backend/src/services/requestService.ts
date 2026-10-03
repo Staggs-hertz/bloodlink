@@ -143,6 +143,54 @@ export class RequestService {
     return { requests, total, page, limit };
   }
 
+  async getMyRequestSummary(hospitalId: string) {
+    const [total, pending, matched, approved, fulfilled, rejected] =
+      await Promise.all([
+        prisma.bloodRequest.count({
+          where: { hospitalId },
+        }),
+        prisma.bloodRequest.count({
+          where: {
+            hospitalId,
+            status: "PENDING",
+          },
+        }),
+        prisma.bloodRequest.count({
+          where: {
+            hospitalId,
+            status: "MATCHED",
+          },
+        }),
+        prisma.bloodRequest.count({
+          where: {
+            hospitalId,
+            status: "APPROVED",
+          },
+        }),
+        prisma.bloodRequest.count({
+          where: {
+            hospitalId,
+            status: "FULFILLED",
+          },
+        }),
+        prisma.bloodRequest.count({
+          where: {
+            hospitalId,
+            status: "REJECTED",
+          },
+        }),
+      ]);
+
+    return {
+      total,
+      pending,
+      matched,
+      approved,
+      fulfilled,
+      rejected,
+    };
+  }
+
   async getRequestById(id: string, userId: string, role: string) {
     const request = await prisma.bloodRequest.findUnique({
       where: { id },

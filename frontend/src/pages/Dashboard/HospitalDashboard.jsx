@@ -132,6 +132,7 @@ const icons = {
 
 const statusStyles = {
   PENDING: "bg-yellow-500/10 text-yellow-600",
+  MATCHED: "bg-blue-500/10 text-blue-600",
   APPROVED: "bg-green-500/10 text-green-600",
   REJECTED: "bg-red-500/10 text-red-600",
   FULFILLED: "bg-primary/10 text-primary",
@@ -150,6 +151,15 @@ const HospitalDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [requestSummary, setRequestSummary] = useState({
+    total: 0,
+    pending: 0,
+    matched: 0,
+    approved: 0,
+    fulfilled: 0,
+    rejected: 0,
+  });
+
   const [requests, setRequests] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -162,16 +172,42 @@ const HospitalDashboard = () => {
         setLoading(true);
         setError("");
 
-        const [requestsResponse, inventoryResponse, notificationsResponse] =
-          await Promise.all([
-            api.getMyRequests(1, 5),
-            api.getInventory(),
-            api.getNotifications(1, 5),
-          ]);
+        const [
+          requestsResponse,
+          requestSummaryResponse,
+          inventoryResponse,
+          notificationsResponse,
+        ] = await Promise.all([
+          api.getMyRequests(1, 5),
+          api.getMyRequestSummary(),
+          api.getInventory(),
+          api.getNotifications(1, 5),
+        ]);
 
-        setRequests(requestsResponse.data?.items || []);
-        setInventory(inventoryResponse.data?.items || []);
-        setNotifications(notificationsResponse.data?.items || []);
+        setRequests(
+          Array.isArray(requestsResponse.data) ? requestsResponse.data : [],
+        );
+
+        setRequestSummary(
+          requestSummaryResponse.data || {
+            total: 0,
+            pending: 0,
+            matched: 0,
+            approved: 0,
+            fulfilled: 0,
+            rejected: 0,
+          },
+        );
+
+        setInventory(
+          Array.isArray(inventoryResponse.data) ? inventoryResponse.data : [],
+        );
+
+        setNotifications(
+          Array.isArray(notificationsResponse.data)
+            ? notificationsResponse.data
+            : [],
+        );
       } catch (error) {
         setError(error?.message || "Unable to load your dashboard.");
       } finally {
@@ -182,20 +218,8 @@ const HospitalDashboard = () => {
     loadDashboard();
   }, []);
 
-  const pendingRequests = requests.filter(
-    (request) => request.status === "PENDING",
-  );
-
-  const approvedRequests = requests.filter(
-    (request) => request.status === "APPROVED",
-  );
-
-  const rejectedRequests = requests.filter(
-    (request) => request.status === "REJECTED",
-  );
-
   const unreadNotifications = notifications.filter(
-    (notification) => !notification.isRead,
+    (notification) => notification.status === "SENT",
   ).length;
 
   if (loading) {
@@ -249,7 +273,7 @@ const HospitalDashboard = () => {
           <p className="mt-3 text-xs text-muted-foreground">Total Requests</p>
 
           <p className="mt-1 text-xl font-bold text-foreground">
-            {requests.length}
+            {requests.total}
           </p>
         </div>
 
@@ -261,7 +285,7 @@ const HospitalDashboard = () => {
           <p className="mt-3 text-xs text-muted-foreground">Pending</p>
 
           <p className="mt-1 text-xl font-bold text-foreground">
-            {pendingRequests.length}
+            {requestSummary.pending}
           </p>
         </div>
 
@@ -273,7 +297,7 @@ const HospitalDashboard = () => {
           <p className="mt-3 text-xs text-muted-foreground">Approved</p>
 
           <p className="mt-1 text-xl font-bold text-foreground">
-            {approvedRequests.length}
+            {requestSummary.approved}
           </p>
         </div>
 
@@ -285,7 +309,7 @@ const HospitalDashboard = () => {
           <p className="mt-3 text-xs text-muted-foreground">Rejected</p>
 
           <p className="mt-1 text-xl font-bold text-foreground">
-            {rejectedRequests.length}
+            {requestSummary.rejected}
           </p>
         </div>
       </section>
@@ -307,7 +331,7 @@ const HospitalDashboard = () => {
 
             <button
               type="button"
-              onClick={() => navigate("/requests")}
+              onClick={() => navigate("/blood-requests")}
               className="text-xs font-medium text-primary hover:underline"
             >
               View all
@@ -330,7 +354,7 @@ const HospitalDashboard = () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/requests/new")}
+                onClick={() => navigate("/blood-requests/new")}
                 className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 {icons.plus}
@@ -350,10 +374,8 @@ const HospitalDashboard = () => {
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {request.unitsRequired ?? request.units ?? "—"} unit
-                      {(request.unitsRequired ?? request.units ?? 0) !== 1
-                        ? "s"
-                        : ""}
+                      {request.unitsNeeded ?? "—"} unit
+                      {(request.unitsNeeded ?? 0) !== 1 ? "s" : ""}
                     </p>
                   </div>
 
@@ -388,7 +410,7 @@ const HospitalDashboard = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/requests/new")}
+            onClick={() => navigate("/blood-requests/new")}
             className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
           >
             {icons.plus}

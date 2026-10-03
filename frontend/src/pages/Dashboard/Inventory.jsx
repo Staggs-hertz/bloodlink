@@ -129,10 +129,7 @@ export default function Inventory() {
       setSaving(true);
       setSaveError("");
 
-      await api.updateInventory({
-        bloodType,
-        unitsAvailable: units,
-      });
+      await api.updateInventory(bloodType, units);
 
       setEditingBloodType(null);
       setEditValue("");
