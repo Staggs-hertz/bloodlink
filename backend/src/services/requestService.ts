@@ -80,7 +80,7 @@ export class RequestService {
         patientName: data.patientName,
         patientAge: data.patientAge,
         patientGender: data.patientGender,
-        hospitalNo: data.hospitalNo,
+        patientReferenceNo: data.hospitalNo,
 
         ward: data.ward,
 

@@ -273,7 +273,7 @@ const HospitalDashboard = () => {
           <p className="mt-3 text-xs text-muted-foreground">Total Requests</p>
 
           <p className="mt-1 text-xl font-bold text-foreground">
-            {requests.total}
+            {requestSummary.total}
           </p>
         </div>
 
