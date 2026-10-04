@@ -42,7 +42,7 @@ export class RequestService {
       patientName: string;
       patientAge: number;
       patientGender: "MALE" | "FEMALE";
-      hospitalNo: string;
+      patientReferenceNo: string;
       ward: string;
       notes?: string;
     },
@@ -80,7 +80,7 @@ export class RequestService {
         patientName: data.patientName,
         patientAge: data.patientAge,
         patientGender: data.patientGender,
-        patientReferenceNo: data.hospitalNo,
+        patientReferenceNo: data.patientReferenceNo,
 
         ward: data.ward,
 

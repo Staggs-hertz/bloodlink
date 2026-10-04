@@ -22,7 +22,7 @@ const initialFormData = {
   patientName: "",
   patientAge: "",
   patientGender: "",
-  hospitalNo: "",
+  patientReferenceNo: "",
   ward: "",
   notes: "",
 };
@@ -153,8 +153,8 @@ const CreateBloodRequest = () => {
       return "Please select the patient's gender.";
     }
 
-    if (!formData.hospitalNo.trim()) {
-      return "Please enter the hospital number.";
+    if (!formData.patientReferenceNo.trim()) {
+      return "Please enter the patient reference number.";
     }
 
     if (!formData.ward.trim()) {
@@ -187,7 +187,7 @@ const CreateBloodRequest = () => {
         patientName: formData.patientName.trim(),
         patientAge: Number(formData.patientAge),
         patientGender: formData.patientGender,
-        hospitalNo: formData.hospitalNo.trim(),
+        patientReferenceNo: formData.patientReferenceNo.trim(),
         ward: formData.ward.trim(),
         notes: formData.notes.trim() || undefined,
       };
@@ -530,23 +530,23 @@ const CreateBloodRequest = () => {
               </select>
             </div>
 
-            {/* Hospital number */}
+            {/* Patient reference number */}
             <div>
               <label
-                htmlFor="hospitalNo"
+                htmlFor="patientReferenceNo"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
-                Hospital Number <span className="text-red-500">*</span>
+                Patient Reference Number <span className="text-red-500">*</span>
               </label>
 
               <input
-                id="hospitalNo"
-                name="hospitalNo"
+                id="patientReferenceNo"
+                name="patientReferenceNo"
                 type="text"
-                value={formData.hospitalNo}
+                value={formData.patientReferenceNo}
                 onChange={handleChange}
                 disabled={submitting}
-                placeholder="e.g. HOS-2026-001"
+                placeholder="e.g. PAT-2026-001"
                 autoComplete="off"
                 required
                 className={inputClass}
