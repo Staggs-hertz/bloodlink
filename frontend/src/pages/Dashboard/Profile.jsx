@@ -205,7 +205,9 @@ const Profile = () => {
        */
       await api.updateDonorProfile({
         gender: formData.gender,
-        dateOfBirth: formData.dateOfBirth,
+        dateOfBirth: formData.dateOfBirth
+          ? new Date(formData.dateOfBirth).toISOString()
+          : null,
         phone: formData.phone.trim(),
         city: formData.city.trim(),
         state: formData.state.trim(),
