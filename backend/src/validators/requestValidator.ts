@@ -31,12 +31,6 @@ export const createRequestSchema = z.object({
       .min(1, "At least 1 unit is required")
       .max(50, "A maximum of 50 units can be requested at once"),
 
-    // hospitalName: z
-    //   .string()
-    //   .trim()
-    //   .min(1, "Hospital name is required")
-    //   .max(150, "Hospital name cannot exceed 150 characters"),
-
     notes: z
       .string()
       .trim()
@@ -54,7 +48,11 @@ export const createRequestSchema = z.object({
       .max(120, "Patient age must exceed 120")
       .optional(),
     patientGender: z.enum(["MALE", "FEMALE"]),
-    hospitalNo: z.string().trim().min(1, "Hospital number is required").max(50),
+    patientReferenceNo: z
+      .string()
+      .trim()
+      .min(1, "Patient reference number is required")
+      .max(50),
     ward: z.string().trim().min(1, "Ward is required").max(100),
   }),
 });
