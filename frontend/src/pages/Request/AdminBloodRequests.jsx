@@ -26,6 +26,33 @@ const urgencyStyles = {
   CRITICAL: "bg-red-100 text-red-700",
 };
 
+const compatibility = {
+  O_NEGATIVE: [
+    "O_NEGATIVE",
+    "O_POSITIVE",
+    "A_NEGATIVE",
+    "A_POSITIVE",
+    "B_NEGATIVE",
+    "B_POSITIVE",
+    "AB_NEGATIVE",
+    "AB_POSITIVE",
+  ],
+
+  O_POSITIVE: ["O_POSITIVE", "A_POSITIVE", "B_POSITIVE", "AB_POSITIVE"],
+
+  A_NEGATIVE: ["A_NEGATIVE", "A_POSITIVE", "AB_NEGATIVE", "AB_POSITIVE"],
+
+  A_POSITIVE: ["A_POSITIVE", "AB_POSITIVE"],
+
+  B_NEGATIVE: ["B_NEGATIVE", "B_POSITIVE", "AB_NEGATIVE", "AB_POSITIVE"],
+
+  B_POSITIVE: ["B_POSITIVE", "AB_POSITIVE"],
+
+  AB_NEGATIVE: ["AB_NEGATIVE", "AB_POSITIVE"],
+
+  AB_POSITIVE: ["AB_POSITIVE"],
+};
+
 const formatStatus = (status) => {
   if (!status) return "Unknown";
 
@@ -84,7 +111,14 @@ const UrgencyBadge = ({ urgency }) => (
 
 const AdminBloodRequests = () => {
   const [requests, setRequests] = useState([]);
+  const [donors, setDonors] = useState([]);
   const [loading, setLoading] = useState(true);
+  // const [loadingDonors, setLoadingDonors] = useState(false);
+
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+
   const [error, setError] = useState("");
 
   const [reloadKey, setReloadKey] = useState(0);
@@ -95,25 +129,36 @@ const AdminBloodRequests = () => {
   const [bloodTypeFilter, setBloodTypeFilter] = useState("ALL");
 
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedDonorId, setSelectedDonorId] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchRequests = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const response = await api.getAllRequests();
+        const [requestsResponse, donorsResponse] = await Promise.all([
+          api.getAllRequests(),
+          api.getAllDonors(),
+        ]);
 
         const requestData =
-          response?.data?.items ||
-          response?.data?.requests ||
-          response?.data ||
+          requestsResponse?.data?.items ||
+          requestsResponse?.data?.requests ||
+          requestsResponse?.data ||
+          [];
+
+        const donorData =
+          donorsResponse?.data?.items ||
+          donorsResponse?.data?.donors ||
+          donorsResponse?.data ||
           [];
 
         if (isMounted) {
           setRequests(Array.isArray(requestData) ? requestData : []);
+          setDonors(Array.isArray(donorData) ? donorData : []);
         }
       } catch (err) {
         if (isMounted) {
@@ -130,12 +175,39 @@ const AdminBloodRequests = () => {
       }
     };
 
-    fetchRequests();
+    fetchData();
 
     return () => {
       isMounted = false;
     };
   }, [reloadKey]);
+
+  /*
+   * Only donors who are currently available and have a compatible
+   * blood type are shown for the selected request.
+   */
+  const compatibleDonors = useMemo(() => {
+    if (!selectedRequest?.bloodType) {
+      return [];
+    }
+
+    return donors.filter((donor) => {
+      const donorBloodType =
+        donor?.bloodType || donor?.user?.donorProfile?.bloodType;
+
+      const isAvailable =
+        donor?.isAvailable ?? donor?.user?.donorProfile?.isAvailable ?? false;
+
+      if (!donorBloodType || !isAvailable) {
+        return false;
+      }
+
+      return (
+        compatibility[donorBloodType]?.includes(selectedRequest.bloodType) ??
+        false
+      );
+    });
+  }, [donors, selectedRequest]);
 
   const filteredRequests = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
@@ -148,7 +220,6 @@ const AdminBloodRequests = () => {
         !search ||
         hospitalName.includes(search) ||
         patientName.includes(search) ||
-        request?.hospitalNo?.toLowerCase().includes(search) ||
         request?.ward?.toLowerCase().includes(search);
 
       const matchesStatus =
@@ -191,6 +262,96 @@ const AdminBloodRequests = () => {
     setBloodTypeFilter("ALL");
   };
 
+  const closeModal = () => {
+    if (actionLoading) return;
+
+    setSelectedRequest(null);
+    setSelectedDonorId("");
+    setActionError("");
+    setActionSuccess("");
+  };
+
+  const openRequest = (request) => {
+    setSelectedRequest(request);
+    setSelectedDonorId("");
+    setActionError("");
+    setActionSuccess("");
+  };
+
+  const handleApprove = async () => {
+    if (!selectedRequest) return;
+
+    if (!selectedDonorId) {
+      setActionError("Please select a compatible donor before approving.");
+      return;
+    }
+
+    setActionLoading(true);
+    setActionError("");
+    setActionSuccess("");
+
+    try {
+      await api.approveRequest(selectedRequest.id, selectedDonorId);
+
+      setActionSuccess("Blood request approved successfully.");
+
+      /*
+       * Refresh the request list so the new APPROVED status
+       * and updated inventory state are immediately visible.
+       */
+      setReloadKey((current) => current + 1);
+
+      /*
+       * Close the modal after the action succeeds.
+       */
+      setSelectedRequest(null);
+      setSelectedDonorId("");
+    } catch (err) {
+      setActionError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to approve the blood request.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedRequest) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to reject this blood request?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionLoading(true);
+    setActionError("");
+    setActionSuccess("");
+
+    try {
+      await api.rejectRequest(selectedRequest.id);
+
+      setActionSuccess("Blood request rejected successfully.");
+
+      setReloadKey((current) => current + 1);
+
+      setSelectedRequest(null);
+      setSelectedDonorId("");
+    } catch (err) {
+      setActionError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to reject the blood request.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -222,6 +383,13 @@ const AdminBloodRequests = () => {
           Refresh
         </button>
       </div>
+
+      {/* Success */}
+      {actionSuccess && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {actionSuccess}
+        </div>
+      )}
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
@@ -489,12 +657,6 @@ const AdminBloodRequests = () => {
                         <p className="font-medium text-slate-900">
                           {getHospitalName(request)}
                         </p>
-
-                        {request.hospitalNo && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            Hospital No: {request.hospitalNo}
-                          </p>
-                        )}
                       </td>
 
                       <td className="px-5 py-4">
@@ -534,7 +696,7 @@ const AdminBloodRequests = () => {
                       <td className="px-5 py-4 text-right">
                         <button
                           type="button"
-                          onClick={() => setSelectedRequest(request)}
+                          onClick={() => openRequest(request)}
                           className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
                         >
                           View
@@ -604,7 +766,7 @@ const AdminBloodRequests = () => {
 
                 <button
                   type="button"
-                  onClick={() => setSelectedRequest(request)}
+                  onClick={() => openRequest(request)}
                   className="mt-5 w-full rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
                 >
                   View Request
@@ -632,8 +794,9 @@ const AdminBloodRequests = () => {
 
               <button
                 type="button"
-                onClick={() => setSelectedRequest(null)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                onClick={closeModal}
+                disabled={actionLoading}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Close details"
               >
                 <svg
@@ -656,6 +819,13 @@ const AdminBloodRequests = () => {
                 <UrgencyBadge urgency={selectedRequest.urgency} />
               </div>
 
+              {/* Action error */}
+              {actionError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {actionError}
+                </div>
+              )}
+
               {/* Hospital */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -668,14 +838,6 @@ const AdminBloodRequests = () => {
 
                     <p className="mt-1 text-sm font-medium text-slate-800">
                       {getHospitalName(selectedRequest)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-400">Hospital Number</p>
-
-                    <p className="mt-1 text-sm font-medium text-slate-800">
-                      {selectedRequest.hospitalNo || "—"}
                     </p>
                   </div>
 
@@ -768,10 +930,115 @@ const AdminBloodRequests = () => {
                 </div>
               </div>
 
+              {/* Request actions */}
+              {["PENDING", "MATCHED"].includes(selectedRequest.status) && (
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Administrative Actions
+                  </h3>
+
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Select a compatible available donor before approving this
+                    request. Approval will assign the donor and deduct the
+                    requested units from inventory.
+                  </p>
+
+                  <div className="mt-4">
+                    <label
+                      htmlFor="donor-selection"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Select Donor
+                    </label>
+
+                    {compatibleDonors.length === 0 ? (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-700">
+                        No compatible available donors were found for{" "}
+                        {getBloodTypeLabel(selectedRequest.bloodType)}.
+                      </div>
+                    ) : (
+                      <select
+                        id="donor-selection"
+                        value={selectedDonorId}
+                        onChange={(event) =>
+                          setSelectedDonorId(event.target.value)
+                        }
+                        disabled={actionLoading}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      >
+                        <option value="">Select a compatible donor</option>
+
+                        {compatibleDonors.map((donor) => {
+                          const donorUser = donor.user || donor;
+                          const donorProfile =
+                            donor.user?.donorProfile || donor;
+
+                          const donorName =
+                            `${donorUser.firstName || ""} ${
+                              donorUser.lastName || ""
+                            }`.trim() || "Unnamed donor";
+
+                          const donorBloodType =
+                            donorProfile.bloodType || donor.bloodType;
+
+                          return (
+                            <option
+                              key={donorUser.id || donor.id}
+                              value={donorUser.id || donor.id}
+                            >
+                              {donorName} — {getBloodTypeLabel(donorBloodType)}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      disabled={
+                        actionLoading ||
+                        compatibleDonors.length === 0 ||
+                        !selectedDonorId
+                      }
+                      className="flex-1 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading ? "Processing..." : "Approve Request"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleReject}
+                      disabled={actionLoading}
+                      className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading ? "Processing..." : "Reject Request"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Already processed */}
+              {!["PENDING", "MATCHED"].includes(selectedRequest.status) && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-sm font-medium text-slate-700">
+                    No administrative action is available for this request.
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    This request has already been{" "}
+                    {formatStatus(selectedRequest.status).toLowerCase()}.
+                  </p>
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setSelectedRequest(null)}
-                className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                onClick={closeModal}
+                disabled={actionLoading}
+                className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Close
               </button>
