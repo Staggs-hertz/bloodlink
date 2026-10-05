@@ -60,7 +60,9 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictError("Email is already registered");
+      throw new ConflictError(
+        "If this email is already registered, try logging in instead",
+      );
     }
 
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_ROUNDS);

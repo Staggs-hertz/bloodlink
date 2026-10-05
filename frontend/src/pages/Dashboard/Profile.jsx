@@ -195,9 +195,7 @@ const Profile = () => {
        * Blood type is handled separately by the backend donor endpoint.
        */
       if (formData.bloodType !== profile.bloodType) {
-        await api.updateBloodType({
-          bloodType: formData.bloodType,
-        });
+        await api.updateBloodType(formData.bloodType);
       }
 
       /*

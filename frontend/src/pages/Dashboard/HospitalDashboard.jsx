@@ -354,7 +354,7 @@ const HospitalDashboard = () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/blood-requests/new")}
+                onClick={() => navigate("/requests/new")}
                 className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 {icons.plus}
@@ -410,7 +410,7 @@ const HospitalDashboard = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/blood-requests/new")}
+            onClick={() => navigate("/requests/new")}
             className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
           >
             {icons.plus}
