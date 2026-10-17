@@ -265,7 +265,7 @@ export const api = {
     }),
 
   createAdmin: (body) =>
-    request("/admin/users/admin", {
+    request("/super-admin/users/admin", {
       method: "POST",
       body: JSON.stringify(body),
     }),
