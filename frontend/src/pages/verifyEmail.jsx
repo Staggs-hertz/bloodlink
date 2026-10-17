@@ -1,56 +1,71 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { CheckCircle, Loader2, XCircle, MailCheck } from "lucide-react";
 
 import { api } from "../utils/api";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get("token")?.trim();
 
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState(token ? "ready" : "error");
+  const [message, setMessage] = useState(
+    token ? "" : "The verification link is missing its token.",
+  );
 
-  useEffect(() => {
-    let cancelled = false;
+  const handleVerifyEmail = async () => {
+    if (!token || status === "loading" || status === "success") {
+      return;
+    }
 
-    const verifyEmail = async () => {
-      if (!token) {
-        setStatus("error");
-        setMessage("The verification link is missing a token.");
-        return;
-      }
+    setStatus("loading");
+    setMessage("");
 
-      try {
-        const response = await api.verifyEmail(token);
+    try {
+      const response = await api.verifyEmail(token);
 
-        if (cancelled) return;
-
-        setStatus("success");
-        setMessage(
-          response?.message || "Your email has been verified successfully.",
-        );
-      } catch (error) {
-        if (cancelled) return;
-
-        setStatus("error");
-        setMessage(
-          error?.message || "This verification link is invalid or has expired.",
-        );
-      }
-    };
-
-    verifyEmail();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+      setStatus("success");
+      setMessage(
+        response?.message || "Your email has been verified successfully.",
+      );
+    } catch (error) {
+      setStatus("error");
+      setMessage(
+        error?.message ||
+          "Verification failed. The link may be invalid or expired.",
+      );
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+          {status === "ready" && (
+            <>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <MailCheck className="h-7 w-7" />
+              </div>
+
+              <h1 className="mt-5 text-xl font-semibold text-foreground">
+                Verify your email
+              </h1>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Click the button below to verify your email address and activate
+                your BloodLink account.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleVerifyEmail}
+                className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Verify email
+              </button>
+            </>
+          )}
+
           {status === "loading" && (
             <>
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -95,7 +110,7 @@ const VerifyEmail = () => {
               </div>
 
               <h1 className="mt-5 text-xl font-semibold text-foreground">
-                Verification failed
+                Verification unsuccessful
               </h1>
 
               <p className="mt-2 text-sm text-muted-foreground">{message}</p>

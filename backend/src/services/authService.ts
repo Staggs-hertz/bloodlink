@@ -382,11 +382,12 @@ export class AuthService {
   }
 
   async verifyEmail(token: string) {
-    /*
-     * The client sends the raw verification token.
-     * Hash it before looking it up in the database.
-     */
-    const tokenHash = hashVerificationToken(token);
+    if (!token?.trim()) {
+      throw new BadRequestError("Verification token is required");
+    }
+
+    // The raw token is never stored in the database.
+    const tokenHash = hashVerificationToken(token.trim());
 
     const record = await prisma.emailVerificationToken.findUnique({
       where: {
@@ -394,56 +395,59 @@ export class AuthService {
       },
     });
 
-    if (!record) {
-      throw new BadRequestError("Invalid or expired verification token");
-    }
-
-    if (record.expiresAt < new Date()) {
-      throw new BadRequestError("Invalid or expired verification token");
+    if (!record || record.expiresAt <= new Date() || record.isUsed) {
+      throw new BadRequestError(
+        "Invalid, expired, or already used verification token",
+      );
     }
 
     /*
-     * Atomically mark the verification token as used.
-     *
-     * Only one request can change this token from
-     * isUsed=false to isUsed=true.
+     * Consume the token and verify the user in one transaction.
+     * If either operation fails, both changes are rolled back.
      */
-    const consumedToken = await prisma.emailVerificationToken.updateMany({
-      where: {
-        id: record.id,
-        isUsed: false,
-      },
-      data: {
-        isUsed: true,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+
+      // Atomically claim the token so concurrent requests cannot
+      // successfully use the same verification link.
+      const consumedToken = await tx.emailVerificationToken.updateMany({
+        where: {
+          id: record.id,
+          isUsed: false,
+          expiresAt: {
+            gt: now,
+          },
+        },
+        data: {
+          isUsed: true,
+        },
+      });
+
+      if (consumedToken.count !== 1) {
+        throw new BadRequestError(
+          "Invalid, expired, or already used verification token",
+        );
+      }
+
+      const verifiedUser = await tx.user.update({
+        where: {
+          id: record.userId,
+        },
+        data: {
+          isEmailVerified: true,
+        },
+        select: {
+          email: true,
+          firstName: true,
+        },
+      });
+
+      return verifiedUser;
     });
 
-    if (consumedToken.count !== 1) {
-      throw new BadRequestError("Invalid or expired verification token");
-    }
-
-    await prisma.user.update({
-      where: {
-        id: record.userId,
-      },
-      data: {
-        isEmailVerified: true,
-      },
-    });
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: record.userId,
-      },
-      select: {
-        email: true,
-        firstName: true,
-      },
-    });
-
-    if (user) {
-      sendWelcomeEmail(user.email, user.firstName).catch(() => {});
-    }
+    // Send the welcome email after the transaction commits.
+    // Email delivery failure must not undo successful verification.
+    sendWelcomeEmail(user.email, user.firstName).catch(() => {});
 
     return {
       message: "Email verified successfully",
