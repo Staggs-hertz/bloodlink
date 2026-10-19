@@ -18,6 +18,32 @@ export const clearAccessToken = () => {
   accessTokenMemory = null;
 };
 
+const getApiErrorMessage = (data) => {
+  if (Array.isArray(data?.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((error) => {
+        const field = String(error.field || "")
+          .split(".")
+          .filter((part) => part && !["body", "query", "params"].includes(part))
+          .pop();
+
+        const fieldLabel = field
+          ? field
+              .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+              .replace(/^./, (character) => character.toUpperCase())
+          : "";
+
+        if (!error.message) return "";
+
+        return fieldLabel ? `${fieldLabel}: ${error.message}` : error.message;
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return data?.message || data?.error || "Something went wrong";
+};
+
 const refreshAccessToken = async () => {
   const refreshResponse = await fetch(`${BASE_URL}/auth/refresh-token`, {
     method: "POST",
@@ -85,13 +111,6 @@ const request = async (endpoint, options = {}, retry = true) => {
 
   const data = await response.json().catch(() => ({}));
 
-  /*
-   * If the access token has expired, obtain a new one using
-   * the HTTP-only refresh-token cookie.
-   *
-   * A shared promise prevents multiple simultaneous requests
-   * from attempting to rotate the same refresh token.
-   */
   if (response.status === 401 && retry && endpoint !== "/auth/refresh-token") {
     try {
       if (!refreshPromise) {
@@ -121,9 +140,7 @@ const request = async (endpoint, options = {}, retry = true) => {
   }
 
   if (!response.ok) {
-    const error = new Error(
-      data?.message || data?.error || "Something went wrong",
-    );
+    const error = new Error(getApiErrorMessage(data));
 
     error.status = response.status;
     error.data = data;
@@ -189,6 +206,16 @@ export const api = {
 
   getAllDonors: (page = 1, limit = 20) =>
     request(`/donors?page=${page}&limit=${limit}`),
+
+  // Hospitals
+
+  getMyHospitalProfile: () => request("/hospitals/me"),
+
+  updateHospitalProfile: (body) =>
+    request("/hospitals/me", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
 
   // Blood Requests
 

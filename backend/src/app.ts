@@ -13,14 +13,10 @@ import inventoryRoutes from "./routes/inventoryRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import superAdminRoutes from "./routes/superAdminRoutes";
+import hospitalRoutes from "./routes/hospitalRoutes";
 
 const app: Application = express();
 
-/*
- * Trust the first proxy in production.
- *
- * This is important when BloodLink is deployed behind a reverse proxy.
- */
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
@@ -114,6 +110,8 @@ app.use(`/api/${API_VERSION}/notifications`, notificationRoutes);
 app.use(`/api/${API_VERSION}/admin`, adminRoutes);
 
 app.use(`/api/${API_VERSION}/super-admin`, superAdminRoutes);
+
+app.use(`/api/${API_VERSION}/hospitals`, hospitalRoutes);
 
 // 404 handler
 app.use((_req, res) => {
