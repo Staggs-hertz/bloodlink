@@ -30,7 +30,7 @@ const genderOptions = [
   { value: "FEMALE", label: "Female" },
 ];
 
-const emptyProfile = {
+const emptyDonorProfile = {
   bloodType: "",
   gender: "",
   dateOfBirth: "",
@@ -40,6 +40,17 @@ const emptyProfile = {
   country: "Nigeria",
   isAvailable: true,
   smsOptIn: false,
+};
+
+const emptyHospitalProfile = {
+  organizationName: "",
+  registrationNumber: "",
+  address: "",
+  city: "",
+  state: "",
+  country: "Nigeria",
+  isVerifiedInstitution: false,
+  isEmailVerified: false,
 };
 
 const formatBloodType = (bloodType) => {
@@ -77,8 +88,12 @@ const formatDate = (date) => {
 const Profile = () => {
   const { user, updateUser } = useAuth();
 
-  const [profile, setProfile] = useState(emptyProfile);
-  const [formData, setFormData] = useState(emptyProfile);
+  const isHospital = user?.role === "HOSPITAL";
+
+  const initialProfile = isHospital ? emptyHospitalProfile : emptyDonorProfile;
+
+  const [profile, setProfile] = useState(initialProfile);
+  const [formData, setFormData] = useState(initialProfile);
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -93,27 +108,44 @@ const Profile = () => {
         setLoading(true);
         setError("");
 
-        const response = await api.getMyDonorProfile();
+        const response =
+          user?.role === "HOSPITAL"
+            ? await api.getMyHospitalProfile()
+            : await api.getMyDonorProfile();
 
-        const donorProfile =
+        const data =
+          response?.data?.hospitalProfile ||
           response?.data?.donorProfile ||
           response?.data?.profile ||
           response?.data ||
-          {};
+          response;
 
-        const loadedProfile = {
-          bloodType: donorProfile.bloodType || "",
-          gender: donorProfile.gender || "",
-          dateOfBirth: donorProfile.dateOfBirth
-            ? donorProfile.dateOfBirth.slice(0, 10)
-            : "",
-          phone: donorProfile.phone || "",
-          city: donorProfile.city || "",
-          state: donorProfile.state || "",
-          country: donorProfile.country || "Nigeria",
-          isAvailable: donorProfile.isAvailable ?? true,
-          smsOptIn: donorProfile.smsOptIn ?? false,
-        };
+        let loadedProfile;
+
+        if (user?.role === "HOSPITAL") {
+          loadedProfile = {
+            organizationName: data.organizationName || "",
+            registrationNumber: data.registrationNumber || "",
+            address: data.address || "",
+            city: data.city || "",
+            state: data.state || "",
+            country: data.country || "Nigeria",
+            isVerifiedInstitution: data.isVerifiedInstitution ?? false,
+            isEmailVerified: data.isEmailVerified ?? false,
+          };
+        } else {
+          loadedProfile = {
+            bloodType: data.bloodType || "",
+            gender: data.gender || "",
+            dateOfBirth: data.dateOfBirth ? data.dateOfBirth.slice(0, 10) : "",
+            phone: data.phone || "",
+            city: data.city || "",
+            state: data.state || "",
+            country: data.country || "Nigeria",
+            isAvailable: data.isAvailable ?? true,
+            smsOptIn: data.smsOptIn ?? false,
+          };
+        }
 
         setProfile(loadedProfile);
         setFormData(loadedProfile);
@@ -126,8 +158,10 @@ const Profile = () => {
       }
     };
 
-    loadProfile();
-  }, []);
+    if (user?.role) {
+      loadProfile();
+    }
+  }, [user?.role]);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -157,6 +191,40 @@ const Profile = () => {
 
     setError("");
     setSuccess("");
+
+    if (user?.role === "HOSPITAL") {
+      try {
+        setSaving(true);
+
+        await api.updateHospitalProfile({
+          address: formData.address.trim(),
+          city: formData.city.trim(),
+          state: formData.state.trim(),
+          country: formData.country.trim() || "Nigeria",
+        });
+
+        const updatedProfile = {
+          ...profile,
+          address: formData.address.trim(),
+          city: formData.city.trim(),
+          state: formData.state.trim(),
+          country: formData.country.trim() || "Nigeria",
+        };
+
+        setProfile(updatedProfile);
+        setFormData(updatedProfile);
+        setEditing(false);
+        setSuccess("Hospital profile updated successfully.");
+      } catch (err) {
+        setError(
+          err?.message || "Unable to update your profile. Please try again.",
+        );
+      } finally {
+        setSaving(false);
+      }
+
+      return;
+    }
 
     if (!formData.bloodType) {
       setError("Please select your blood type.");

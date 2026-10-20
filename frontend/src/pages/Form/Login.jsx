@@ -40,7 +40,15 @@ const Login = () => {
       login(res.data.user, res.data.accessToken);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Unable to sign in. Please try again.");
+      if (err?.status === 401) {
+        setError(
+          "Incorrect email or password. Please check your details and try again.",
+        );
+      } else {
+        setError(
+          "Unable to sign in. Please try again. If the problem continues, contact support.",
+        );
+      }
     } finally {
       setLoading(false);
     }

@@ -106,7 +106,16 @@ const DonorDashboard = () => {
         ]);
 
         setDonorProfile(profileResponse.data);
-        setNotifications(notificationResponse.data?.items || []);
+
+        const notificationData = notificationResponse.data;
+
+        setNotifications(
+          Array.isArray(notificationData)
+            ? notificationData
+            : Array.isArray(notificationData?.items)
+              ? notificationData.items
+              : [],
+        );
       } catch (error) {
         setError(error?.message || "Unable to load your dashboard.");
       } finally {
@@ -143,7 +152,7 @@ const DonorDashboard = () => {
   };
 
   const unreadNotifications = notifications.filter(
-    (notification) => !notification.isRead,
+    (notification) => notification.status === "SENT",
   ).length;
 
   if (loading) {

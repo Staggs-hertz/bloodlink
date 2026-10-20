@@ -111,7 +111,13 @@ const request = async (endpoint, options = {}, retry = true) => {
 
   const data = await response.json().catch(() => ({}));
 
-  if (response.status === 401 && retry && endpoint !== "/auth/refresh-token") {
+  const shouldAttemptRefresh =
+    !endpoint.startsWith("/auth/login") &&
+    !endpoint.startsWith("/auth/register") &&
+    !endpoint.startsWith("/auth/verify-email") &&
+    endpoint !== "/auth/refresh-token";
+
+  if (response.status === 401 && retry && shouldAttemptRefresh) {
     try {
       if (!refreshPromise) {
         refreshPromise = refreshAccessToken().finally(() => {
