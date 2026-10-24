@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.10.0
- * Query Engine version: 0edf323efd1d98336f3f0a68684b56f689b900d3
+ * Prisma Client JS version: 7.10.1
+ * Query Engine version: d1b3f377ca835d73fd50954a5e22128b9ebdd6b8
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.10.0",
-  engine: "0edf323efd1d98336f3f0a68684b56f689b900d3"
+  client: "7.10.1",
+  engine: "d1b3f377ca835d73fd50954a5e22128b9ebdd6b8"
 }
 
 /**
@@ -403,7 +403,9 @@ export const ModelName = {
   BloodInventory: 'BloodInventory',
   RefreshToken: 'RefreshToken',
   Notification: 'Notification',
-  EmailVerificationToken: 'EmailVerificationToken'
+  EmailVerificationToken: 'EmailVerificationToken',
+  DonorInvitation: 'DonorInvitation',
+  Donation: 'Donation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -419,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "donorProfile" | "bloodRequest" | "bloodInventory" | "refreshToken" | "notification" | "emailVerificationToken"
+    modelProps: "user" | "donorProfile" | "bloodRequest" | "bloodInventory" | "refreshToken" | "notification" | "emailVerificationToken" | "donorInvitation" | "donation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -941,6 +943,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DonorInvitation: {
+      payload: Prisma.$DonorInvitationPayload<ExtArgs>
+      fields: Prisma.DonorInvitationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DonorInvitationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DonorInvitationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        findFirst: {
+          args: Prisma.DonorInvitationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DonorInvitationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        findMany: {
+          args: Prisma.DonorInvitationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>[]
+        }
+        create: {
+          args: Prisma.DonorInvitationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        createMany: {
+          args: Prisma.DonorInvitationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DonorInvitationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>[]
+        }
+        delete: {
+          args: Prisma.DonorInvitationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        update: {
+          args: Prisma.DonorInvitationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        deleteMany: {
+          args: Prisma.DonorInvitationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DonorInvitationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DonorInvitationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>[]
+        }
+        upsert: {
+          args: Prisma.DonorInvitationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonorInvitationPayload>
+        }
+        aggregate: {
+          args: Prisma.DonorInvitationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDonorInvitation>
+        }
+        groupBy: {
+          args: Prisma.DonorInvitationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DonorInvitationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DonorInvitationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DonorInvitationCountAggregateOutputType> | number
+        }
+      }
+    }
+    Donation: {
+      payload: Prisma.$DonationPayload<ExtArgs>
+      fields: Prisma.DonationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DonationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DonationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        findFirst: {
+          args: Prisma.DonationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DonationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        findMany: {
+          args: Prisma.DonationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>[]
+        }
+        create: {
+          args: Prisma.DonationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        createMany: {
+          args: Prisma.DonationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DonationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>[]
+        }
+        delete: {
+          args: Prisma.DonationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        update: {
+          args: Prisma.DonationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        deleteMany: {
+          args: Prisma.DonationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DonationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DonationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>[]
+        }
+        upsert: {
+          args: Prisma.DonationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DonationPayload>
+        }
+        aggregate: {
+          args: Prisma.DonationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDonation>
+        }
+        groupBy: {
+          args: Prisma.DonationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DonationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DonationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DonationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1085,6 +1235,33 @@ export const EmailVerificationTokenScalarFieldEnum = {
 } as const
 
 export type EmailVerificationTokenScalarFieldEnum = (typeof EmailVerificationTokenScalarFieldEnum)[keyof typeof EmailVerificationTokenScalarFieldEnum]
+
+
+export const DonorInvitationScalarFieldEnum = {
+  id: 'id',
+  bloodRequestId: 'bloodRequestId',
+  donorId: 'donorId',
+  status: 'status',
+  invitedAt: 'invitedAt',
+  respondedAt: 'respondedAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type DonorInvitationScalarFieldEnum = (typeof DonorInvitationScalarFieldEnum)[keyof typeof DonorInvitationScalarFieldEnum]
+
+
+export const DonationScalarFieldEnum = {
+  id: 'id',
+  donorId: 'donorId',
+  bloodRequestId: 'bloodRequestId',
+  donationDate: 'donationDate',
+  unitsCollected: 'unitsCollected',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DonationScalarFieldEnum = (typeof DonationScalarFieldEnum)[keyof typeof DonationScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1247,6 +1424,20 @@ export type EnumNotificationStatusFieldRefInput<$PrismaModel> = FieldRefInputTyp
  * Reference to a field of type 'NotificationStatus[]'
  */
 export type ListEnumNotificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'InvitationStatus'
+ */
+export type EnumInvitationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InvitationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'InvitationStatus[]'
+ */
+export type ListEnumInvitationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InvitationStatus[]'>
     
 
 
@@ -1421,6 +1612,8 @@ export type GlobalOmitConfig = {
   refreshToken?: Prisma.RefreshTokenOmit
   notification?: Prisma.NotificationOmit
   emailVerificationToken?: Prisma.EmailVerificationTokenOmit
+  donorInvitation?: Prisma.DonorInvitationOmit
+  donation?: Prisma.DonationOmit
 }
 
 /* Types for Logging */

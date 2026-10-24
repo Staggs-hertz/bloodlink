@@ -74,3 +74,13 @@ export type Notification = Prisma.NotificationModel
  * 
  */
 export type EmailVerificationToken = Prisma.EmailVerificationTokenModel
+/**
+ * Model DonorInvitation
+ * 
+ */
+export type DonorInvitation = Prisma.DonorInvitationModel
+/**
+ * Model Donation
+ * 
+ */
+export type Donation = Prisma.DonationModel

@@ -57,7 +57,9 @@ export const ModelName = {
   BloodInventory: 'BloodInventory',
   RefreshToken: 'RefreshToken',
   Notification: 'Notification',
-  EmailVerificationToken: 'EmailVerificationToken'
+  EmailVerificationToken: 'EmailVerificationToken',
+  DonorInvitation: 'DonorInvitation',
+  Donation: 'Donation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -181,6 +183,33 @@ export const EmailVerificationTokenScalarFieldEnum = {
 } as const
 
 export type EmailVerificationTokenScalarFieldEnum = (typeof EmailVerificationTokenScalarFieldEnum)[keyof typeof EmailVerificationTokenScalarFieldEnum]
+
+
+export const DonorInvitationScalarFieldEnum = {
+  id: 'id',
+  bloodRequestId: 'bloodRequestId',
+  donorId: 'donorId',
+  status: 'status',
+  invitedAt: 'invitedAt',
+  respondedAt: 'respondedAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type DonorInvitationScalarFieldEnum = (typeof DonorInvitationScalarFieldEnum)[keyof typeof DonorInvitationScalarFieldEnum]
+
+
+export const DonationScalarFieldEnum = {
+  id: 'id',
+  donorId: 'donorId',
+  bloodRequestId: 'bloodRequestId',
+  donationDate: 'donationDate',
+  unitsCollected: 'unitsCollected',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DonationScalarFieldEnum = (typeof DonationScalarFieldEnum)[keyof typeof DonationScalarFieldEnum]
 
 
 export const SortOrder = {
